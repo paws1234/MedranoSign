@@ -40,11 +40,6 @@ SHA-256 hash of the signed content), and export the result.
 ## Repository layout
 
 The Flutter project lives at the repository root (package name `pdf_esign_app`).
-Planning documents:
-
-- [.claude/Plan.md](.claude/Plan.md) – full product plan and milestones.
-- [.claude/implement.md](.claude/implement.md) – task-by-task agentic implementation guide with statuses.
-- `.claude/taskNN.md` – per-task briefs + completion logs (one task, one session).
 
 Application code structure under `lib/`:
 
@@ -129,8 +124,7 @@ flutter test
 
 Headless (CI) verification: `flutter test` runs the full unit + widget suite;
 `flutter build web` compiles the complete application for a real target.
-Manual on-device verification is recommended before release (see
-[implement.md](.claude/implement.md), Tasks 15–17).
+Manual on-device verification is recommended before release.
 
 ## License
 

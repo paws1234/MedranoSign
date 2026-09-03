@@ -3,9 +3,10 @@
 A production-ready **Flutter multiplatform PDF viewer & e-sign application**.
 
 Open any standard PDF, overlay interactive text fields and electronic signatures,
-stamp **only** the elements the user explicitly placed onto the original PDF,
-append a clean **audit trail** page (UTC timestamp, device/user-agent info,
-SHA-256 hash of the signed content), and export the result.
+export a **flattened** PDF that contains only the elements the user explicitly
+placed, append a clean **audit trail** page (UTC timestamp, device/user-agent
+info, SHA-256 fingerprint of the signed content), and save the result. The whole
+stack is open source — **no licenses required**.
 
 ## Supported platforms
 
@@ -26,16 +27,18 @@ SHA-256 hash of the signed content), and export the result.
   resize; per-page overlay state in normalized coordinates (robust to zoom/resize).
 - ✍️ High-fidelity **signature capture** with finger, mouse and stylus input;
   transparent PNG export at 2×/3× resolution.
-- 🖋 **Stamping service** that draws *only* the user-placed text and signature
-  images onto the original PDF (`syncfusion_flutter_pdf`, pure Dart).
+- 🖋 **Export service** that rebuilds a **flattened** PDF (`pdf`, Apache-2.0)
+  from high-resolution page renders (`pdfx`, MIT), drawing *only* the
+  user-placed text and signature images at the exact on-screen positions, then
+  appending the audit page. No Syncfusion, no license keys.
 - 📄 **Certificate of Completion / audit trail** page appended to the document
-  with the signing time, platform/device info, action list and the SHA-256 hash
-  of the signed document bytes.
+  with the signing time, platform/device info, action list and a SHA-256
+  fingerprint of the signed content (deterministic canonical digest).
 - 💾 Save / download the final PDF on Web, mobile and desktop.
 
 > **Important rule:** the exporter never adds stamps, watermarks, logos, borders
-> or any other visual element the user did not explicitly place. Overlay → stamp
-> → audit is the complete write path.
+> or any other visual element the user did not explicitly place. Overlay →
+> compose/export → audit is the complete write path.
 
 ## Repository layout
 
@@ -58,7 +61,7 @@ lib/
 │   ├── overlay/              # overlay element models, painter, edit widgets
 │   ├── signature/            # custom signature pad (capture + PNG export)
 │   ├── editor/               # e-sign workspace screen wiring viewer + overlays
-│   ├── modifier/             # PDF stamping + audit trail (syncfusion)
+│   ├── modifier/             # flattened PDF composer + audit trail (free)
 │   ├── export/               # cross-platform save / download service
 │   └── home/                 # file-open home / responsive app shell
 └── shared/
@@ -104,16 +107,38 @@ flutter run               # connected device / emulator
 - **iOS / macOS / Windows / Linux**: native save dialogs via `file_picker`
   (desktop) and the app documents directory.
 
-### Syncfusion license note
+### Licensing — fully open source, no licenses required
 
-PDF *stamping / editing* uses `syncfusion_flutter_pdf`, which is distributed
-under Syncfusion's free **Community License** (for organizations under
-US$1M annual revenue and < 5 developers) or a commercial license. Since
-Syncfusion 18.3.35-beta no license-key registration or watermark is required in
-code, but you are legally required to hold a valid license before shipping.
-Register at <https://www.syncfusion.com/products/communitylicense> and follow
-their Flutter licensing terms. The viewer and signature pad are independent
-open implementations and carry no such obligation.
+This project deliberately uses only permissively-licensed, open-source packages.
+**Syncfusion is not used**: its PDF-editing and signature widgets carry a
+Community-license / paid obligation, so they were removed in favor of the free
+alternatives below.
+
+| Package | License | Role |
+|---------|---------|------|
+| `pdf` | Apache-2.0 | PDF creation: rebuilds the flattened export pages + audit page |
+| `pdfx` | MIT | PDF rendering: renders original pages (PDFium / PDF.js / Core Graphics) |
+| `signature` | MIT | Signature capture pad with transparent PNG export |
+| `file_picker`, `path_provider`, `crypto`, `flutter_riverpod` | OSS | file access, paths, SHA-256, state |
+
+**Export model (flattening).** The free `pdf` package cannot load and edit an
+existing PDF (that capability exists only in Syncfusion or the paid
+`pdf_crypto`), so the exporter never touches the original bytes. Instead each
+original page is rendered to a high-resolution image by `pdfx` and the final
+document is a new, flattened PDF containing those page images plus only the
+text/signatures the user placed. The output looks identical to the screen; the
+original text layer is not selectable in the exported file — standard practice
+for signed documents (DocuSign-style).
+
+**Audit hash.** The `pdf` library randomizes the document ID on every save, so
+raw PDF bytes are not reproducible. The audit page therefore records a SHA-256
+*canonical fingerprint* of the signed content (each page render plus each
+placed element), which is deterministic and can be recomputed at any time from
+the same content.
+
+If you ever need true vector editing of existing PDFs, the only current options
+are Syncfusion (Community/paid license) or `pdf_crypto` (paid); this project
+intentionally avoids both.
 
 ## Tests
 
